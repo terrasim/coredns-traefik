@@ -59,10 +59,12 @@ services:
       # the port 53 is likely used on your host system, you might change them if any problems occurs
       - '53:53'
       - '53:53/udp'
-    # alternative to defining the corefile as env variable.
-    # mount a directory (`./config`) in this case and place a `Corefile` in it which is then used by coredns
-    # volumes:
-    #   - './config:/etc/coredns'
+    volumes:
+      # we need the docker socket to find traefik docker containers
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      # alternative to defining the corefile as env variable.
+      # mount a directory (`./config`) in this case and place a `Corefile` in it which is then used by coredns
+      # - './config:/etc/coredns'
 
   traefik:
     image: traefik:latest
