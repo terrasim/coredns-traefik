@@ -52,7 +52,15 @@ func (t *Traefik) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 				if port, _ := strconv.ParseUint(label, 10, 32); port != 0 {
 					for _, network := range c.NetworkSettings.Networks {
 						domain := strings.TrimSuffix(state.QName(), ".")
-						if ok, err := hasDomain(fmt.Sprintf("%s:%d", network.IPAddress, port), domain); err != nil {
+
+						_, subnet, err := net.ParseCIDR(fmt.Sprintf("%s/%d", network.Gateway, network.IPPrefixLen))
+						if err != nil {
+							format := fmt.Sprintf("failed to get network of host %s", network.IPAddress)
+							logError(t, err, format)
+							return t.Next.ServeDNS(ctx, w, r)
+						}
+
+						if ok, err := hasDomain(fmt.Sprintf("%s:%d", network.IPAddress, port), domain, subnet); err != nil {
 							format := fmt.Sprintf("failed to check if host %s has domain %s: %s", network.IPAddress, domain, err)
 							logError(t, err, format)
 							return t.Next.ServeDNS(ctx, w, r)
@@ -95,24 +103,62 @@ func (t *Traefik) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 
 var hostRegex = regexp.MustCompile(`Host\(\x60(.+)\x60\)`)
 
-func hasDomain(host, domain string) (bool, error) {
+type traefikApiRouter struct {
+	Rule string `json:"rule"`
+	Name string `json:"name"`
+}
+
+func hasDomain(host, domain string, routerSubnet *net.IPNet) (bool, error) {
 	resp, err := http.Get("http://" + path.Join(host, "api/http/routers"))
 	if err != nil {
 		return false, err
 	}
 
-	var responseBody []map[string]any
+	var responseBody []traefikApiRouter
 	if err = json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
 		return false, err
 	}
 
 	for _, response := range responseBody {
-		if rule, ok := response["rule"]; ok {
-			if matches := hostRegex.FindStringSubmatch(rule.(string)); len(matches) == 2 && matches[1] == domain {
-				return true, nil
-			}
+		if matches := hostRegex.FindStringSubmatch(response.Rule); len(matches) >= 2 && matches[1] == domain {
+			return inSameNetwork(host, response.Name, routerSubnet)
 		}
 	}
+	return false, nil
+}
+
+var ipHttpRegex = regexp.MustCompile(`^https?://(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?(/.+)?$`)
+
+type traefikApiService struct {
+	LoadBalancer struct {
+		Servers []struct {
+			Url string `json:"url"`
+		} `json:"servers"`
+	} `json:"loadBalancer"`
+}
+
+func inSameNetwork(host, serviceName string, routerSubnet *net.IPNet) (bool, error) {
+	resp, err := http.Get("http://" + path.Join(host, "api/http/services", serviceName))
+	if err != nil {
+		return false, err
+	}
+
+	var responseBody traefikApiService
+	if err = json.NewDecoder(resp.Body).Decode(&responseBody); err != nil {
+		return false, err
+	}
+
+	for _, server := range responseBody.LoadBalancer.Servers {
+		if matches := ipHttpRegex.FindStringSubmatch(server.Url); len(matches) >= 2 {
+			ip := net.ParseIP(matches[1])
+			if routerSubnet.Contains(ip) {
+				return true, nil
+			}
+		} else {
+			return false, fmt.Errorf("failed to get ip address of service %s", serviceName)
+		}
+	}
+
 	return false, nil
 }
 
