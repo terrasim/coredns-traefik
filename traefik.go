@@ -104,8 +104,9 @@ func (t *Traefik) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 var hostRegex = regexp.MustCompile(`Host\(\x60(.+)\x60\)`)
 
 type traefikApiRouter struct {
-	Rule string `json:"rule"`
-	Name string `json:"name"`
+	Rule     string `json:"rule"`
+	Name     string `json:"name"`
+	Provider string `json:"provider"`
 }
 
 func hasDomain(host, domain string, routerSubnet *net.IPNet) (bool, error) {
@@ -120,6 +121,10 @@ func hasDomain(host, domain string, routerSubnet *net.IPNet) (bool, error) {
 	}
 
 	for _, response := range responseBody {
+		if response.Provider != "docker" {
+			continue
+		}
+
 		if matches := hostRegex.FindStringSubmatch(response.Rule); len(matches) >= 2 && matches[1] == domain {
 			return inSameNetwork(host, response.Name, routerSubnet)
 		}
