@@ -51,15 +51,16 @@ jobs:
       - name: Generate tags
         id: meta
         uses: docker/metadata-action@v4
-        flavor: |
-          latest=true
-        images: |
-          terrasim/coredns-traefik
-          ghcr.io/terrasim/coredns-traefik
-        tags: |
-          type=semver,pattern={{major}}
-          type=semver,pattern={{major.minor}}
-          type=semver,pattern={{version}}
+        with:
+          flavor: |
+            latest=true
+          images: |
+            terrasim/coredns-traefik
+            ghcr.io/terrasim/coredns-traefik
+          tags: |
+            type=semver,pattern={{major}}
+            type=semver,pattern={{major.minor}}
+            type=semver,pattern={{version}}
 
       - name: Build and push
         uses: docker/build-push-action@v4
