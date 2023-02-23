@@ -28,7 +28,7 @@ jobs:
       - name: Build
         run: go build coredns/main.go
 
-  publish:
+  docker:
     needs: test
     runs-on: ubuntu-latest
     steps:
@@ -62,7 +62,7 @@ jobs:
             type=semver,pattern={{major.minor}}
             type=semver,pattern={{version}}
 
-      - name: Build and push
+      - name: Build and maybe push
         uses: docker/build-push-action@v4
         with:
           platforms: |
