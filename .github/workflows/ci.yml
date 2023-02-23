@@ -1,4 +1,4 @@
-name: publish
+name: ci
 
 on:
   push:
@@ -14,7 +14,22 @@ on:
         type: boolean
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 'stable'
+
+      - name: Build
+        run: go build coredns/main.go
+
   publish:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

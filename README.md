@@ -1,4 +1,4 @@
-# coredns-traefik [![License](https://img.shields.io/github/license/terrasim/coredns-traefik?style=flat-square)](https://github.com/terrasim/coredns-traefik/blob/main/LICENSE) [![Publish](https://img.shields.io/github/actions/workflow/status/terrasim/coredns-traefik/publish.yml?branch=main&style=flat-square)](https://github.com/terrasim/coredns-traefik/actions/workflows/publish.yml)
+# coredns-traefik [![License](https://img.shields.io/github/license/terrasim/coredns-traefik?style=flat-square)](https://github.com/terrasim/coredns-traefik/blob/main/LICENSE) [![CI](https://img.shields.io/github/actions/workflow/status/terrasim/coredns-traefik/ci.yml?branch=main&style=flat-square)](https://github.com/terrasim/coredns-traefik/actions/workflows/ci.yml)
 
 ## Name
 
