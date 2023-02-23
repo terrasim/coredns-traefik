@@ -2,9 +2,16 @@ name: publish
 
 on:
   push:
+    branches:
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish to GitHub registry'
+        required: true
+        type: boolean
 
 jobs:
   publish:
@@ -26,9 +33,26 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Generate tags
+        id: meta
+        uses: docker/metadata-action@v4
+        flavor: |
+          latest=true
+        images: |
+          terrasim/coredns-traefik
+          ghcr.io/terrasim/coredns-traefik
+        tags: |
+          type=semver,pattern={{major}}
+          type=semver,pattern={{major.minor}}
+          type=semver,pattern={{version}}
+
       - name: Build and push
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v4
         with:
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ghcr.io/terrasim/coredns-traefik:latest
+          platforms: |
+            linux/amd64
+            linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # push only to registry if workflow got triggered by tag creation
+          push: ${{ github.ref_type == 'tag' || github.event.inputs.publish == 'true' }}
