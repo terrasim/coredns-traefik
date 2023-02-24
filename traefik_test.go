@@ -124,5 +124,5 @@ func newDockerContainer(ctx context.Context, image string, mounts map[string]str
 }
 
 func deleteDockerContainer(ctx context.Context, id string) error {
-	return docker.ContainerStop(ctx, id, nil)
+	return docker.ContainerStop(ctx, id, container.StopOptions{})
 }
