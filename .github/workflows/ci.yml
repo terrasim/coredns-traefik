@@ -55,7 +55,6 @@ jobs:
           flavor: |
             latest=true
           images: |
-            terrasim/coredns-traefik
             ghcr.io/terrasim/coredns-traefik
           tags: |
             type=semver,pattern={{major}}
