@@ -6,12 +6,6 @@ on:
       - main
     tags:
       - 'v*'
-  workflow_dispatch:
-    inputs:
-      publish:
-        description: 'Publish to GitHub registry'
-        required: true
-        type: boolean
 
 jobs:
   test:
@@ -48,7 +42,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate tags
+      - name: Generate metadata
         id: meta
         uses: docker/metadata-action@v4
         with:
@@ -57,8 +51,9 @@ jobs:
           images: |
             ghcr.io/terrasim/coredns-traefik
           tags: |
-            type=semver,pattern={{major}}
-            type=semver,pattern={{major.minor}}
+            type=match,pattern=v(\d+).\d+.\d+,group=1
+            type=match,pattern=v(\d+.\d+).\d+,group=1
+            type=match,pattern=v(\d+.\d+.\d+),group=1
             type=semver,pattern={{version}}
 
       - name: Build and maybe push
