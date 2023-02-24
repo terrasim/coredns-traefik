@@ -20,7 +20,9 @@ jobs:
           go-version: 'stable'
 
       - name: Build
-        run: go build coredns/main.go
+        run: |
+          go build coredns/main.go
+          go test -c
 
   docker:
     needs: test
