@@ -7,7 +7,7 @@ require (
 	github.com/coredns/coredns v1.10.1
 	github.com/docker/docker v23.0.1+incompatible
 	github.com/docker/go-connections v0.4.0
-	github.com/miekg/dns v1.1.50
+	github.com/miekg/dns v1.1.52
 )
 
 require (
